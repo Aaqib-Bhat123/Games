@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aaqib's Car Racing Game</title>
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,Helvetica,sans-serif;
+}
+
+body{
+overflow:hidden;
+background:#1b1b1b;
+}
+
+#intro{
+position:absolute;
+width:100%;
+height:100%;
+background:linear-gradient(135deg,#111,#333,#000);
+display:flex;
+justify-content:center;
+align-items:center;
+flex-direction:column;
+color:white;
+z-index:10;
+}
+
+#intro h1{
+font-size:50px;
+color:#00ff88;
+text-shadow:0 0 20px cyan;
+margin-bottom:20px;
+}
+
+#intro p{
+font-size:22px;
+margin-bottom:30px;
+}
+
+button{
+padding:15px 35px;
+font-size:22px;
+border:none;
+border-radius:10px;
+background:#00c853;
+color:white;
+cursor:pointer;
+transition:.3s;
+}
+
+button:hover{
+transform:scale(1.1);
+}
+
+#game{
+display:none;
+width:100vw;
+height:100vh;
+position:relative;
+overflow:hidden;
+background:green;
+}
+
+#road{
+position:absolute;
+left:50%;
+transform:translateX(-50%);
+width:420px;
+height:100%;
+background:#444;
+overflow:hidden;
+border-left:8px solid white;
+border-right:8px solid white;
+}
+
+.line{
+position:absolute;
+width:10px;
+height:100px;
+background:white;
+left:205px;
+}
+
+.car{
+position:absolute;
+width:60px;
+height:110px;
+bottom:20px;
+left:180px;
+background:red;
+border-radius:10px;
+box-shadow:0 0 15px red;
+}
+
+.car::before{
+content:"";
+position:absolute;
+width:40px;
+height:20px;
+background:#87CEEB;
+left:10px;
+top:10px;
+border-radius:5px;
+}
+
+.enemy{
+position:absolute;
+width:60px;
+height:110px;
+background:yellow;
+border-radius:10px;
+box-shadow:0 0 10px yellow;
+}
+
+.enemy::before{
+content:"";
+position:absolute;
+width:40px;
+height:20px;
+background:#87CEEB;
+left:10px;
+top:10px;
+border-radius:5px;
+}
+
+#score{
+position:absolute;
+top:15px;
+left:15px;
+font-size:28px;
+color:white;
+font-weight:bold;
+z-index:5;
+}
+
+#gameOver{
+position:absolute;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+font-size:50px;
+color:red;
+display:none;
+font-weight:bold;
+text-shadow:0 0 10px white;
+z-index:20;
+}
+</style>
+
+</head>
+<body>
+
+<div id="intro">
+<h1>🏁 Welcome to Aaqib's Racing Game</h1>
+<p>Use Left and Right Arrow Keys to Drive</p>
+<button onclick="startGame()">START GAME</button>
+</div>
+
+<div id="game">
+<div id="score">Score : 0</div>
+<div id="gameOver">GAME OVER</div>
+
+<div id="road">
+<div class="car" id="player"></div>
+</div>
+</div>
+
+<script>
+
+const game=document.getElementById("game");
+const intro=document.getElementById("intro");
+const road=document.getElementById("road");
+const player=document.getElementById("player");
+const scoreText=document.getElementById("score");
+const gameOver=document.getElementById("gameOver");
+
+let playerX=180;
+let score=0;
+let speed=6;
+let playing=false;
+
+const keys={
+left:false,
+right:false
+};
+
+function startGame(){
+
+intro.style.display="none";
+game.style.display="block";
+playing=true;
+
+createLines();
+createEnemies();
+
+requestAnimationFrame(update);
+
+}
+
+document.addEventListener("keydown",e=>{
+
+if(e.key=="ArrowLeft") keys.left=true;
+if(e.key=="ArrowRight") keys.right=true;
+
+});
+
+document.addEventListener("keyup",e=>{
+
+if(e.key=="ArrowLeft") keys.left=false;
+if(e.key=="ArrowRight") keys.right=false;
+
+});
+
+function createLines(){
+
+for(let i=0;i<8;i++){
+
+let line=document.createElement("div");
+line.className="line";
+line.y=i*150;
+line.style.top=line.y+"px";
+road.appendChild(line);
+
+}
+
+}
+
+function createEnemies(){
+
+for(let i=0;i<3;i++){
+
+let enemy=document.createElement("div");
+enemy.className="enemy";
+enemy.style.left=Math.floor(Math.random()*330)+"px";
+enemy.y=-(i+1)*250;
+enemy.style.top=enemy.y+"px";
+
+road.appendChild(enemy);
+
+}
+
+}
+
+function isCollide(a,b){
+
+let ar=a.getBoundingClientRect();
+let br=b.getBoundingClientRect();
+
+return !(
+ar.bottom<br.top||
+ar.top>br.bottom||
+ar.right<br.left||
+ar.left>br.right
+);
+
+}
+
+function update(){
+
+if(!playing) return;
+
+document.querySelectorAll(".line").forEach(line=>{
+
+line.y+=speed;
+
+if(line.y>700)
+line.y=-100;
+
+line.style.top=line.y+"px";
+
+});
+
+if(keys.left && playerX>0)
+playerX-=7;
+
+if(keys.right && playerX<350)
+playerX+=7;
+
+player.style.left=playerX+"px";
+
+document.querySelectorAll(".enemy").forEach(enemy=>{
+
+enemy.y+=speed;
+
+if(enemy.y>700){
+
+enemy.y=-200;
+enemy.style.left=Math.floor(Math.random()*340)+"px";
+
+score++;
+scoreText.innerHTML="Score : "+score;
+
+if(score%10==0)
+speed++;
+
+}
+
+enemy.style.top=enemy.y+"px";
+
+if(isCollide(player,enemy)){
+
+playing=false;
+gameOver.style.display="block";
+
+}
+
+});
+
+requestAnimationFrame(update);
+
+}
+
+</script>
+
+</body>
+</html>
